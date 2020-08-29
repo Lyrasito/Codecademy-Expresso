@@ -13,6 +13,7 @@ app.use(errorhandler());
 app.use(cors());
 app.use(morgan("dev"));
 app.use("/api", apiRouter);
+app.use(express.static("public"));
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

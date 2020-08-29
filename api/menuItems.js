@@ -42,9 +42,9 @@ const validateItem = (req, res, next) => {
   const newItem = req.body.menuItem;
   if (!newItem.name || !newItem.inventory || !newItem.price) {
     res.sendStatus(400);
+  } else {
+    next();
   }
-  console.log(newItem);
-  next();
 };
 
 itemsRouter.post("/", validateItem, (req, res, next) => {
@@ -79,20 +79,33 @@ itemsRouter.get("/:menuItemId", (req, res, next) => {
 
 itemsRouter.put("/:menuItemId", validateItem, (req, res, next) => {
   const newItem = req.body.menuItem;
+  const sql = `UPDATE MenuItem SET name = '${newItem.name}', description = '${newItem.description}', inventory = ${newItem.inventory}, price = ${newItem.price} WHERE MenuItem.id = ${req.params.menuItemId}`;
+  db.run(sql, function (err) {
+    if (err) {
+      next(err);
+    } else {
+      db.get(
+        `SELECT * FROM MenuItem WHERE MenuItem.id = ${req.params.menuItemId}`,
+        (err, item) => {
+          res.send({ menuItem: item });
+        }
+      );
+    }
+  });
+});
+
+itemsRouter.delete("/:menuItemId", (req, res, next) => {
   db.run(
-    `UPDATE MenuItem SET name = ${newItem.name}, description = ${newItem.description}, inventory = ${newItem.inventory}, price = ${newItem.price} WHERE MenuItem.id = ${req.params.menuItemId}`,
+    `DELETE FROM MenuItem WHERE MenuItem.id = $menuItemId`,
+    { $menuItemId: req.params.menuItemId },
     function (err) {
       if (err) {
         next(err);
       } else {
-        db.get(
-          `SELECT * FROM MenuItem WHERE MenuItem.id = ${req.params.menuItemId}`,
-          (err, item) => {
-            res.send({ menuItem: item });
-          }
-        );
+        res.status(204).send();
       }
     }
   );
 });
+
 module.exports = itemsRouter;
